@@ -119,7 +119,7 @@
 
     function checkNode( node ) {
         if( node.nodeName == 'DIV' && node.className === '_ck_6' && node.getAttribute('aria-label') == 'Location') {
-            locationnode = node;
+            locationElement = node;
             //console.log("location node found");
         }
         if( node.nodeName == 'SPAN') {
@@ -139,7 +139,7 @@
             }
         }
         if( node.nodeName == 'INPUT' && node.getAttribute('autoid') == "_lw_0" // look for autoid instead
-             /*&& node.getAttribute("aria-labelledby") == "MeetingCompose.LocationInputLabel"*/ ) {
+           /*&& node.getAttribute("aria-labelledby") == "MeetingCompose.LocationInputLabel"*/ ) {
             //console.log("INPUT FORM found");
             if( node.nextSibling && node.nextSibling.id != "addMeeting" ) {
                 node.style.width = `${node.offsetWidth-36}px`;
@@ -174,7 +174,7 @@
 
     function mutationHandler (mutationRecords) {
 
-        mutationRecords.forEach (  (mutation) => {
+        mutationRecords.forEach ( (mutation) => {
 
             if(mutation.type == "childList"
                && typeof mutation.addedNodes == "object"
