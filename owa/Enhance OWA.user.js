@@ -1,17 +1,31 @@
 // ==UserScript==
 // @name         Enhance OWA
 // @namespace    http://tampermonkey.net/
-// @version      0.1
+// @version      0.2
 // @updateURL    https://github.com/sker65/userscripts/raw/main/owa/Enhance%20OWA.user.js
 // @description  Enhances calendar item preview to create clickable google meet links, clickable localtions (if a url is given), add google meet as location with one click
 // @author       Stefan Rinke
 // @match        https://owa.understand.ai:*/owa/
 // @icon         https://www.google.com/s2/favicons?domain=understand.ai
-// @grant        none
+// @grant        GM_registerMenuCommand
+// @grant        GM_setValue
+// @grant        GM_getValue
 // ==/UserScript==
 
 (function() {
     'use strict';
+
+    function configureLink() {
+        let link = GM_getValue( 'myMeetingLink', '');
+        console.log("configuring Link");
+        let newLink = prompt("Please enter your meet url", link ? link : 'https://meet.google.com/');
+        if( newLink && newLink !== link ) {
+            GM_setValue('myMeetingLink', newLink );
+        }
+        return newLink;
+    }
+
+    GM_registerMenuCommand("Configure Meet URL", configureLink);
 
     var lastLoadedCalItem = null;
 
@@ -129,7 +143,9 @@
                     element.focus();
                     //var evt = new KeyboardEvent('keypress', { key: "a" });
                     //element.dispatchEvent(evt);
-                    element.value = "https://meet.google.com/mcv-boxf-mdu";
+                    let link = GM_getValue( 'myMeetingLink', '');
+                    if(!link) link = configureLink();
+                    element.value = link;
                     element.dispatchEvent(new Event('change'));
                 });
                 // insert after
