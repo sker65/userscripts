@@ -2,6 +2,7 @@
 // @name         Enhance OWA
 // @namespace    http://tampermonkey.net/
 // @version      0.1
+// @updateURL    https://github.com/sker65/userscripts/raw/main/owa/Enhance%20OWA.user.js
 // @description  Enhances calendar item preview to create clickable google meet links, clickable localtions (if a url is given), add google meet as location with one click
 // @author       Stefan Rinke
 // @match        https://owa.understand.ai:*/owa/
