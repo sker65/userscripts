@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Enhance OWA
 // @namespace    https://github.com/sker65/userscripts/tree/main/owa
-// @version      0.3
+// @version      0.4
 // @updateURL    https://github.com/sker65/userscripts/raw/main/owa/Enhance%20OWA.user.js
 // @description  Enhances calendar item preview to create clickable google meet links, clickable localtions (if a url is given), add google meet as location with one click
 // @author       Stefan Rinke
@@ -104,6 +104,18 @@
 
     myObserver.observe (document, obsConfig);
 
+    function buildMeetButton() {
+        let but = document.createElement("button");
+        but.innerHTML = '<img width="32" height="32" src="https://cdn.icon-icons.com/icons2/2642/PNG/32/google_meet_camera_logo_icon_159349.png"/>';
+        but.id = "addMeeting";
+        but.style.width = "32px";
+        but.style.height = "32px";
+        but.style.marginLeft = '2px';
+        but.style["border-style"] = 'none';
+        but.style["background-color"] = 'white';
+        return but;
+    }
+
     // const tempalte = `<div class="_ck_6" aria-label="Location"><div> <span class="ms-font-s ms-font-weight-regular" title=""></span> </div><a class="ms-font-s ms-font-weight-regular o365button" role="link" ></a></div>`;
     function checkNode( element ) {
         if( element.nodeName == 'DIV' && element.className === '_ck_6' && element.getAttribute('aria-label') == 'Location') {
@@ -126,23 +138,14 @@
                 if( lastLoadedCalItem ) updatePreviewLocation(lastLoadedCalItem);
             }
         }
-        //console.log(element.nodeName,
-        if( element.nodeName == 'INPUT' && element.getAttribute("aria-labelledby") == "MeetingCompose.LocationInputLabel" ) {
+        if( element.nodeName == 'INPUT' && element.getAttribute('autoid') == "_lw_0" // look for autoid instead
+             /*&& element.getAttribute("aria-labelledby") == "MeetingCompose.LocationInputLabel"*/ ) {
             //console.log("INPUT FORM found");
             if( element.nextSibling && element.nextSibling.id != "addMeeting" ) {
-                let but = document.createElement("button");
-                but.innerHTML = '<img src="https://cdn.icon-icons.com/icons2/2642/PNG/512/google_meet_camera_logo_icon_159349.png"/>';
-                but.id = "addMeeting";
-                but.style.width = "32px";
-                but.style.height = "32px";
-                but.style.marginLeft = '2px';
-                but.style["border-style"] = 'none';
-                but.style["background-color"] = 'white';
-
+                element.style.width = `${element.offsetWidth-36}px`;
+                let but = buildMeetButton();
                 but.addEventListener("click", e=>{
                     element.focus();
-                    //var evt = new KeyboardEvent('keypress', { key: "a" });
-                    //element.dispatchEvent(evt);
                     let link = GM_getValue( 'myMeetingLink', '');
                     if(!link) link = configureLink();
                     element.value = link;
