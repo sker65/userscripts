@@ -5,7 +5,7 @@
 // @updateURL    https://github.com/sker65/userscripts/raw/main/owa/Enhance%20OWA.user.js
 // @description  Enhances calendar item preview to create clickable google meet links, clickable localtions (if a url is given), add google meet as location with one click
 // @author       Stefan Rinke
-// @match        https://owa.understand.ai:*/owa/
+// @match        https://owa.understand.ai:*/owa/*
 // @icon         https://www.google.com/s2/favicons?domain=understand.ai
 // @grant        GM_registerMenuCommand
 // @grant        GM_setValue
