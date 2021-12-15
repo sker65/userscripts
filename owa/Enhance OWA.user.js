@@ -29,6 +29,7 @@
 
     var lastLoadedCalItem = null;
 
+    // hook into AJAX reqeusts to capture loaded calendar items
     (function(open) {
         XMLHttpRequest.prototype.open = function() {
             this.addEventListener("readystatechange", function() {
@@ -116,57 +117,56 @@
         return but;
     }
 
-    // const tempalte = `<div class="_ck_6" aria-label="Location"><div> <span class="ms-font-s ms-font-weight-regular" title=""></span> </div><a class="ms-font-s ms-font-weight-regular o365button" role="link" ></a></div>`;
-    function checkNode( element ) {
-        if( element.nodeName == 'DIV' && element.className === '_ck_6' && element.getAttribute('aria-label') == 'Location') {
-            locationElement = element;
-            //console.log("location element found");
+    function checkNode( node ) {
+        if( node.nodeName == 'DIV' && node.className === '_ck_6' && node.getAttribute('aria-label') == 'Location') {
+            locationnode = node;
+            //console.log("location node found");
         }
-        if( element.nodeName == 'SPAN') {
-            if( element.className === 'bidi' ) {
-                //locationElement = element;
-                //console.log(element.innerHTML);
+        if( node.nodeName == 'SPAN') {
+            if( node.className === 'bidi' ) {
+                //locationnode = node;
+                //console.log(node.innerHTML);
                 // make room display in preview a clickable link
-                if( element.innerHTML && element.innerHTML.startsWith("https://meet.google.com") ) {
-                    const link = element.innerHTML;
-                    element.innerHTML = `<a target="_meet" href="${link}">${link}</a>`;
+                if( node.innerHTML && node.innerHTML.startsWith("https://meet.google.com") ) {
+                    const link = node.innerHTML;
+                    node.innerHTML = `<a target="_meet" href="${link}">${link}</a>`;
                 }
             }
-            //console.log("SPAN class=", element.className  );
-            if( element.classList.contains('bodySelector') ) {
-                //console.log(element.innerHTML);
+            //console.log("SPAN class=", node.className  );
+            if( node.classList.contains('bodySelector') ) {
+                //console.log(node.innerHTML);
                 if( lastLoadedCalItem ) updatePreviewLocation(lastLoadedCalItem);
             }
         }
-        if( element.nodeName == 'INPUT' && element.getAttribute('autoid') == "_lw_0" // look for autoid instead
-             /*&& element.getAttribute("aria-labelledby") == "MeetingCompose.LocationInputLabel"*/ ) {
+        if( node.nodeName == 'INPUT' && node.getAttribute('autoid') == "_lw_0" // look for autoid instead
+             /*&& node.getAttribute("aria-labelledby") == "MeetingCompose.LocationInputLabel"*/ ) {
             //console.log("INPUT FORM found");
-            if( element.nextSibling && element.nextSibling.id != "addMeeting" ) {
-                element.style.width = `${element.offsetWidth-36}px`;
+            if( node.nextSibling && node.nextSibling.id != "addMeeting" ) {
+                node.style.width = `${node.offsetWidth-36}px`;
                 let but = buildMeetButton();
                 but.addEventListener("click", e=>{
-                    element.focus();
+                    node.focus();
                     let link = GM_getValue( 'myMeetingLink', '');
                     if(!link) link = configureLink();
-                    element.value = link;
-                    element.dispatchEvent(new Event('change'));
+                    node.value = link;
+                    node.dispatchEvent(new Event('change'));
                 });
                 // insert after
-                element.parentNode.insertBefore(but, element.nextSibling);
+                node.parentNode.insertBefore(but, node.nextSibling);
             }
         }
-        /*if( element.nodeName == 'IFRAME' || element.nodeName == 'IMG' ) {
-            const src = element.getAttribute('src');
+        /*if( node.nodeName == 'IFRAME' || node.nodeName == 'IMG' ) {
+            const src = node.getAttribute('src');
             console.log( "SRC="+src );
             if( src.startsWith('https://exchange.dspace.de' ) ) {
                 const replacedSrc = 'https://owa.understand.ai:1443' + src.substr(26);
                 console.log( 'replacing src for iframe setting to: ' + replacedSrc );
-                element.setAttribute( 'src', replacedSrc );
+                node.setAttribute( 'src', replacedSrc );
             }
         }*/
-        if( element.children ) {
-            for (let i = 0; i < element.children.length; i++) {
-                let item = element.children[i];
+        if( node.children ) {
+            for (let i = 0; i < node.children.length; i++) {
+                let item = node.children[i];
                 checkNode( item );
             }
         }
@@ -174,7 +174,7 @@
 
     function mutationHandler (mutationRecords) {
 
-        mutationRecords.forEach ( function (mutation) {
+        mutationRecords.forEach (  (mutation) => {
 
             if(mutation.type == "childList"
                && typeof mutation.addedNodes == "object"
