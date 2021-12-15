@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Enhance OWA
-// @namespace    http://tampermonkey.net/
-// @version      0.2
+// @namespace    https://github.com/sker65/userscripts/tree/main/owa
+// @version      0.3
 // @updateURL    https://github.com/sker65/userscripts/raw/main/owa/Enhance%20OWA.user.js
 // @description  Enhances calendar item preview to create clickable google meet links, clickable localtions (if a url is given), add google meet as location with one click
 // @author       Stefan Rinke
@@ -173,19 +173,19 @@
 
         mutationRecords.forEach ( function (mutation) {
 
-        if(mutation.type == "childList"
-            && typeof mutation.addedNodes == "object"
-            && mutation.addedNodes.length
-        ) {
-            for (var J = 0, L = mutation.addedNodes.length; J < L; ++J) {
-                const node = mutation.addedNodes[J];
-                checkNode(node);
+            if(mutation.type == "childList"
+               && typeof mutation.addedNodes == "object"
+               && mutation.addedNodes.length
+              ) {
+                for (var J = 0, L = mutation.addedNodes.length; J < L; ++J) {
+                    const node = mutation.addedNodes[J];
+                    checkNode(node);
+                }
+            } else if (mutation.type == "attributes") {
+                const src = mutation.target.getAttribute('src');
+                console.log("changed Attribute node: "+mutation.target.nodeName+" src="+ src );
             }
-        } else if (mutation.type == "attributes") {
-            const src = mutation.target.getAttribute('src');
-            console.log("changed Attribute node: "+mutation.target.nodeName+" src="+ src );
-        }
-    } );
-}
+        } );
+    }
 
 })();
