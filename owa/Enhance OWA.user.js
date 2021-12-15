@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Enhance OWA
 // @namespace    https://github.com/sker65/userscripts/tree/main/owa
-// @version      0.4
+// @version      0.5
 // @updateURL    https://github.com/sker65/userscripts/raw/main/owa/Enhance%20OWA.user.js
 // @description  Enhances calendar item preview to create clickable google meet links, clickable localtions (if a url is given), add google meet as location with one click
 // @author       Stefan Rinke
