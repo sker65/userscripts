@@ -43,7 +43,7 @@
     }
 
     GM_registerMenuCommand("Configure Meet URL", configureLink);
-    GM_registerMenuCommand("Configure Desktop Nofications", configureNotify);
+    GM_registerMenuCommand("Configure Desktop Notifications", configureNotify);
 
     var lastLoadedCalItem = null;
 
