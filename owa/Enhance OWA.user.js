@@ -15,6 +15,12 @@
 (function() {
     'use strict';
 
+    const icons = {
+        meet: 'https://cdn.icon-icons.com/icons2/2642/PNG/32/google_meet_camera_logo_icon_159349.png',
+        mail: 'https://cdn.icon-icons.com/icons2/294/PNG/256/Mail_31108.png',
+        cal: 'https://cdn.icon-icons.com/icons2/1011/PNG/512/Google_Calendar_icon-icons.com_75710.png'
+    };
+
     function configureLink() {
         let link = GM_getValue( 'myMeetingLink', '');
         console.log("configuring Link");
@@ -117,7 +123,7 @@
 
     function buildMeetButton() {
         let but = document.createElement("button");
-        but.innerHTML = '<img width="32" height="32" src="https://cdn.icon-icons.com/icons2/2642/PNG/32/google_meet_camera_logo_icon_159349.png"/>';
+        but.innerHTML = `<img width="32" height="32" src="${icons.meet}"/>`;
         but.id = "addMeeting";
         but.style.width = "32px";
         but.style.height = "32px";
@@ -135,8 +141,7 @@
         return {
             title,
             body,
-            icon: type ? 'https://cdn.icon-icons.com/icons2/1011/PNG/512/Google_Calendar_icon-icons.com_75710.png':
-            'https://cdn.icon-icons.com/icons2/916/PNG/512/Mail_icon-icons.com_71849.png'
+            icon: type ? icons.cal : icons.mail
         };
     }
 
