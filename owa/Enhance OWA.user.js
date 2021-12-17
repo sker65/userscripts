@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Enhance OWA
 // @namespace    https://github.com/sker65/userscripts/tree/main/owa
-// @version      0.7
+// @version      0.8
 // @updateURL    https://github.com/sker65/userscripts/raw/main/owa/Enhance%20OWA.user.js
 // @description  Enhances calendar item preview to create clickable google meet links, clickable localtions (if a url is given), add google meet as location with one click
 // @author       Stefan Rinke
@@ -20,6 +20,8 @@
         mail: 'https://cdn.icon-icons.com/icons2/294/PNG/256/Mail_31108.png',
         cal: 'https://cdn.icon-icons.com/icons2/1011/PNG/512/Google_Calendar_icon-icons.com_75710.png'
     };
+
+    const NotifyType = { CAL: 1, MAIL: 0};
 
     function configureLink() {
         let link = GM_getValue( 'myMeetingLink', '');
@@ -133,15 +135,24 @@
         return but;
     }
 
-    function buildNotification(node) {
-        let type = 1; // calendar for now
-        let rows = node.querySelectorAll('.o365cs-w100-h100');
-        let title = rows[0].innerText;
-        let body = rows[1].innerText;
+    function buildNotification(node, type) {
+        let title = '';
+        let body = '';
+        if( type === NotifyType.CAL ) {
+            let rows = node.querySelectorAll('.o365cs-w100-h100');
+            title = rows[0].innerText;
+            body = rows[1].innerText;
+        } else if( type === NotifyType.MAIL ) {
+            title = node.querySelector('.o365cs-notifications-newMailPopupButtonContent').innerText;
+            let rows = node.querySelectorAll('.o365cs-notifications-text');
+            for( let i = 1; i < rows.length; i++ ) {
+                body += rows[i].innerText + ' ';
+            }
+        }
         return {
             title,
             body,
-            icon: type ? icons.cal : icons.mail
+            icon: type === NotifyType.CAL ? icons.cal : icons.mail
         };
     }
 
@@ -151,16 +162,18 @@
                 locationElement = node;
                 //console.log("location node found");
             }
-            if( node.classList.contains('o365cs-notifications-reminders-container') ) {
+            if( node.classList.contains('o365cs-notifications-reminders-container') || node.classList.contains('o365cs-notifications-newMailPopupButton' ) ) {
                 if( Notification.permission === "granted" && GM_getValue('desktopNotifyActive')) {
                     // extract title, body & type (mail / caledar)
-                    let nc = buildNotification(node);
+                    let type = node.classList.contains('o365cs-notifications-newMailPopupButton' ) ? NotifyType.MAIL : NotifyType.CAL
+                    let nc = buildNotification(node, type);
                     let notify = new Notification( nc.title, {
                         body: nc.body,
                         icon: nc.icon
                     } );
                 }
             }
+
         }
         if( node.nodeName == 'SPAN') {
             if( node.className === 'bidi' ) {
