@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Enhance OWA
 // @namespace    https://github.com/sker65/userscripts/tree/main/owa
-// @version      0.6
+// @version      0.7
 // @updateURL    https://github.com/sker65/userscripts/raw/main/owa/Enhance%20OWA.user.js
 // @description  Enhances calendar item preview to create clickable google meet links, clickable localtions (if a url is given), add google meet as location with one click
 // @author       Stefan Rinke
@@ -25,7 +25,17 @@
         return newLink;
     }
 
+    function configureNotify() {
+        let desktopNotifyActive = confirm('Would you like to activate desktop notifications?');
+        if( desktopNotifyActive ) {
+            Notification.requestPermission();
+        }
+        GM_setValue('desktopNotifyActive', desktopNotifyActive );
+        return desktopNotifyActive;
+    }
+
     GM_registerMenuCommand("Configure Meet URL", configureLink);
+    GM_registerMenuCommand("Configure Desktop Nofications", configureNotify);
 
     var lastLoadedCalItem = null;
 
@@ -117,10 +127,35 @@
         return but;
     }
 
+    function buildNotification(node) {
+        let type = 1; // calendar for now
+        let rows = node.querySelectorAll('.o365cs-w100-h100');
+        let title = rows[0].innerText;
+        let body = rows[1].innerText;
+        return {
+            title,
+            body,
+            icon: type ? 'https://cdn.icon-icons.com/icons2/1011/PNG/512/Google_Calendar_icon-icons.com_75710.png':
+            'https://cdn.icon-icons.com/icons2/916/PNG/512/Mail_icon-icons.com_71849.png'
+        };
+    }
+
     function checkNode( node ) {
-        if( node.nodeName == 'DIV' && node.className === '_ck_6' && node.getAttribute('aria-label') == 'Location') {
-            locationElement = node;
-            //console.log("location node found");
+        if( node.nodeName == 'DIV' ) {
+            if( node.className === '_ck_6' && node.getAttribute('aria-label') == 'Location') {
+                locationElement = node;
+                //console.log("location node found");
+            }
+            if( node.classList.contains('o365cs-notifications-reminders-container') ) {
+                if( Notification.permission === "granted" && GM_getValue('desktopNotifyActive')) {
+                    // extract title, body & type (mail / caledar)
+                    let nc = buildNotification(node);
+                    let notify = new Notification( nc.title, {
+                        body: nc.body,
+                        icon: nc.icon
+                    } );
+                }
+            }
         }
         if( node.nodeName == 'SPAN') {
             if( node.className === 'bidi' ) {
