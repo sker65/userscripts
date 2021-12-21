@@ -114,15 +114,6 @@
         }
     }
 
-    var MutationObserver = window.MutationObserver;
-    var myObserver = new MutationObserver(mutationHandler);
-    var obsConfig = {
-        childList: true, attributes: true,
-        subtree: true, attributeFilter: ['src']
-    };
-
-    myObserver.observe (document, obsConfig);
-
     function buildMeetButton() {
         let but = document.createElement("button");
         but.innerHTML = `<img width="32" height="32" src="${icons.meet}"/>`;
@@ -156,48 +147,51 @@
         };
     }
 
-    function checkNode( node ) {
-        if( node.nodeName == 'DIV' ) {
-            if( node.className === '_ck_6' && node.getAttribute('aria-label') == 'Location') {
-                locationElement = node;
-                //console.log("location node found");
-            }
-            if( node.classList.contains('o365cs-notifications-reminders-container') || node.classList.contains('o365cs-notifications-newMailPopupButton' ) ) {
-                if( Notification.permission === "granted" && GM_getValue('desktopNotifyActive')) {
-                    // extract title, body & type (mail / caledar)
-                    let type = node.classList.contains('o365cs-notifications-newMailPopupButton' ) ? NotifyType.MAIL : NotifyType.CAL
-                    let nc = buildNotification(node, type);
-                    let notify = new Notification( nc.title, {
-                        body: nc.body,
-                        icon: nc.icon
-                    } );
-                }
-            }
+    const elementHandlers = {}; // name -> (node)=>{}
 
+    elementHandlers.DIV = (node) => {
+        if( node.className === '_ck_6' && node.getAttribute('aria-label') == 'Location') {
+            locationElement = node;
+            //console.log("location node found");
         }
-        if( node.nodeName == 'SPAN') {
-            if( node.className === 'bidi' ) {
-                //locationnode = node;
-                //console.log(node.innerHTML);
-                // make room display in preview a clickable link
-                if( node.innerHTML && node.innerHTML.startsWith("https://meet.google.com") ) {
-                    const link = node.innerHTML;
-                    node.innerHTML = `<a target="_meet" href="${link}">${link}</a>`;
-                }
-            }
-            //console.log("SPAN class=", node.className  );
-            if( node.classList.contains('bodySelector') ) {
-                //console.log(node.innerHTML);
-                if( lastLoadedCalItem ) updatePreviewLocation(lastLoadedCalItem);
-            }
-            if( node.classList.contains('o365cs-notifications-reminders-location')) {
-                if( isValidHttpUrl(node.innerHTML) ) {
-                    const url = node.innerHTML;
-                    node.innerHTML = `<a target="_meet" href="${url}">${url}</a>`;
-                }
+        if( node.classList.contains('o365cs-notifications-reminders-container') || node.classList.contains('o365cs-notifications-newMailPopupButton' ) ) {
+            if( Notification.permission === "granted" && GM_getValue('desktopNotifyActive')) {
+                // extract title, body & type (mail / caledar)
+                let type = node.classList.contains('o365cs-notifications-newMailPopupButton' ) ? NotifyType.MAIL : NotifyType.CAL
+                let nc = buildNotification(node, type);
+                let notify = new Notification( nc.title, {
+                    body: nc.body,
+                    icon: nc.icon
+                } );
             }
         }
-        if( node.nodeName == 'INPUT' && node.getAttribute('autoid') == "_lw_0" // look for autoid instead
+    };
+
+    elementHandlers.SPAN = (node) => {
+        if( node.className === 'bidi' ) {
+            //locationnode = node;
+            //console.log(node.innerHTML);
+            // make room display in preview a clickable link
+            if( node.innerHTML && node.innerHTML.startsWith("https://meet.google.com") ) {
+                const link = node.innerHTML;
+                node.innerHTML = `<a target="_meet" href="${link}">${link}</a>`;
+            }
+        }
+        //console.log("SPAN class=", node.className  );
+        if( node.classList.contains('bodySelector') ) {
+            //console.log(node.innerHTML);
+            if( lastLoadedCalItem ) updatePreviewLocation(lastLoadedCalItem);
+        }
+        if( node.classList.contains('o365cs-notifications-reminders-location')) {
+            if( isValidHttpUrl(node.innerHTML) ) {
+                const url = node.innerHTML;
+                node.innerHTML = `<a target="_meet" href="${url}">${url}</a>`;
+            }
+        }
+    };
+
+    elementHandlers.INPUT = (node) => {
+        if( node.getAttribute('autoid') == "_lw_0" // look for autoid instead
            /*&& node.getAttribute("aria-labelledby") == "MeetingCompose.LocationInputLabel"*/ ) {
             //console.log("INPUT FORM found");
             if( node.nextSibling && node.nextSibling.id != "addMeeting" ) {
@@ -214,15 +208,11 @@
                 node.parentNode.insertBefore(but, node.nextSibling);
             }
         }
-        /*if( node.nodeName == 'IFRAME' || node.nodeName == 'IMG' ) {
-            const src = node.getAttribute('src');
-            console.log( "SRC="+src );
-            if( src.startsWith('https://exchange.dspace.de' ) ) {
-                const replacedSrc = 'https://owa.understand.ai:1443' + src.substr(26);
-                console.log( 'replacing src for iframe setting to: ' + replacedSrc );
-                node.setAttribute( 'src', replacedSrc );
-            }
-        }*/
+    }
+
+    function checkNode( node ) {
+        if( elementHandlers[node.nodeName] ) elementHandlers[node.nodeName](node);
+
         if( node.children ) {
             for (let i = 0; i < node.children.length; i++) {
                 let item = node.children[i];
@@ -244,10 +234,20 @@
                     checkNode(node);
                 }
             } else if (mutation.type == "attributes") {
+                // not used actually
                 const src = mutation.target.getAttribute('src');
-                console.log("changed Attribute node: "+mutation.target.nodeName+" src="+ src );
+                //console.log("changed Attribute node: "+mutation.target.nodeName+" src="+ src );
             }
         } );
     }
+
+    var MutationObserver = window.MutationObserver;
+    var observer = new MutationObserver(mutationHandler);
+    var observerConfig = {
+        childList: true, attributes: true,
+        subtree: true, attributeFilter: ['src']
+    };
+
+    observer.observe (document, observerConfig);
 
 })();
