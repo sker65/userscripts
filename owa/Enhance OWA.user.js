@@ -67,7 +67,7 @@
                             const calItem = resItem.Items[0];
                             //console.log(calItem.Body.Value );
                             lastLoadedCalItem = calItem;
-                            console.log("lastLoadedCalItem SET to ", calItem.Body.Value.substr(0,30));
+                            //console.log("lastLoadedCalItem SET to ", calItem.Body.Value.substr(0,30));
                             updatePreviewLocation(calItem);
                         }
                     }
