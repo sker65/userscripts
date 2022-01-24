@@ -1,5 +1,7 @@
 # Changelog
 
+## 0.9
+- support teams links in preview popup
 ## 0.8
 - support for desktop notifies for incoming mail
 ## 0.7

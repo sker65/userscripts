@@ -1,12 +1,12 @@
 // ==UserScript==
 // @name         Enhance OWA
 // @namespace    https://github.com/sker65/userscripts/tree/main/owa
-// @version      0.8
+// @version      0.9
 // @updateURL    https://github.com/sker65/userscripts/raw/main/owa/Enhance%20OWA.user.js
 // @description  Enhances calendar item preview to create clickable google meet links, clickable localtions (if a url is given), add google meet as location with one click
 // @author       Stefan Rinke
 // @match        https://owa.understand.ai:*/owa/*
-// @icon         https://www.google.com/s2/favicons?domain=understand.ai
+// @icon         https://understand.ai/assets/favicon/apple-icon-57x57.png
 // @grant        GM_registerMenuCommand
 // @grant        GM_setValue
 // @grant        GM_getValue
@@ -92,20 +92,26 @@
     function updatePreviewLocation( item /*calendarItem*/ ) {
         const body = item.Body.Value;;
         let realLocation = item.Location?.DisplayName;
-        // make "URL locations" clickable in general
+        // make "URL locations" clickable in general -> team does not create a location property
         if( isValidHttpUrl(realLocation) ) {
             realLocation = `<a target="_blank" href="${realLocation}">${realLocation}</a>`;
         }
 
         let linkIds = body.match(/(https:\/\/meet.google.com\/[a-z][a-z][a-z]-[a-z][a-z][a-z][a-z]-[a-z][a-z][a-z])/g);
-        console.log( linkIds, locationElement );
+        const teamsRefEx = /"(?<link>https:\/\/teams.microsoft.com\/l\/meetup-join\/.*)"/g;
+        let teamLinkIds = teamsRefEx.exec(body);
+        console.log( teamLinkIds, linkIds, locationElement );
         if( locationElement ) {
-            if( linkIds && linkIds.length >0) {
+            if( teamLinkIds && teamLinkIds.groups.link) {
+                const link = teamLinkIds.groups.link;
+                const template = `<div> <span class="ms-font-s ms-font-weight-regular" title="MS Teams Meeting" style=""><span class="bidi">${realLocation}${realLocation.length>0?'<br/>':''}<a target="_blank" href="${link}">MS Teams Meeting</a></span></span> </div>`;
+                locationElement.innerHTML = template;
+            } else if( linkIds && linkIds.length >0) {
                 if( realLocation.includes('https://meet.google.com') ) {
                     realLocation = ""; // avoid double meet URL
                 }
                 const link= linkIds[0];
-                const template = `<div> <span class="ms-font-s ms-font-weight-regular" title="${link}" style=""><span class="bidi">${realLocation}${realLocation.length>0?'<br/>':''}<a target="_meet" href="${link}">${link}</a></span></span> </div>`;
+                const template = `<div> <span class="ms-font-s ms-font-weight-regular" title="${link}" style=""><span class="bidi">${realLocation}${realLocation.length>0?'<br/>':''}<a target="_blank" href="${link}">${link}</a></span></span> </div>`;
                 locationElement.innerHTML = template;
             } else {
                 const template = `<div> <span class="ms-font-s ms-font-weight-regular" style="">${realLocation}<span class="bidi"></span></span> </div>`;
