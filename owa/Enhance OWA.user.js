@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Enhance OWA
 // @namespace    https://github.com/sker65/userscripts/tree/main/owa
-// @version      0.9
+// @version      0.10
 // @updateURL    https://github.com/sker65/userscripts/raw/main/owa/Enhance%20OWA.user.js
 // @description  Enhances calendar item preview to create clickable google meet links, clickable localtions (if a url is given), add google meet as location with one click
 // @author       Stefan Rinke
@@ -46,13 +46,32 @@
     GM_registerMenuCommand("Configure Desktop Notifications", configureNotify);
 
     var lastLoadedCalItem = null;
+    let networkErrorCount = 0;
+
+    function handleError(err) {
+        networkErrorCount = networkErrorCount + 1;
+        console.error("XHR ERROR: ", err.type, networkErrorCount );
+        if( networkErrorCount > 4 ) {
+            window.alert('Network problems, check your connection and maybe reload');
+        }
+    }
 
     // hook into AJAX reqeusts to capture loaded calendar items
     (function(open) {
         XMLHttpRequest.prototype.open = function() {
+            this.addEventListener("error", (err) => {
+                handleError(err);
+            } );
+            this.addEventListener("timeout", (err) => {
+                handleError(err);
+            } );
+            this.addEventListener("abort", (err) => {
+                handleError(err);
+            } );
             this.addEventListener("readystatechange", function() {
                 if( this.readyState == 4 ){
                     const respURL = this.responseURL.toString();
+                    networkErrorCount=0;
                     //console.log(typeof this.response);
                     if( respURL.includes("action=GetCalendarEvent") ) {
                         //console.log( this.response );
@@ -95,6 +114,8 @@
         // make "URL locations" clickable in general -> team does not create a location property
         if( isValidHttpUrl(realLocation) ) {
             realLocation = `<a target="_blank" href="${realLocation}">${realLocation}</a>`;
+        } else if( realLocation.startsWith('meet.google.com') && isValidHttpUrl(`https://${realLocation}`) ) {
+            realLocation = `<a target="_blank" href="https://${realLocation}">${realLocation}</a>`;
         }
 
         let linkIds = body.match(/(https:\/\/meet.google.com\/[a-z][a-z][a-z]-[a-z][a-z][a-z][a-z]-[a-z][a-z][a-z])/g);

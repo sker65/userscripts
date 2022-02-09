@@ -1,5 +1,7 @@
 # Changelog
 
+## 0.10
+- support meet links without https:// prefix
 ## 0.9
 - support teams links in preview popup
 ## 0.8
