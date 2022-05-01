@@ -1,8 +1,10 @@
 // ==UserScript==
 // @name         Download backing tracks von ultimate-guitar.com
-// @namespace    http://tampermonkey.net/
+// @namespace    https://github.com/sker65/userscripts/ultimate-guitar
 // @version      0.1
 // @description  Easier downloading of backing tracks
+// @updateURL    https://github.com/sker65/userscripts/raw/main/ultimate-guitar/download-backing-tracks.user.js
+// @downloadURL  https://github.com/sker65/userscripts/raw/main/ultimate-guitar/download-backing-tracks.user.js
 // @author       Stefan Rinke
 // @match        https://www.ultimate-guitar.com/backing_track/*
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=ultimate-guitar.com
