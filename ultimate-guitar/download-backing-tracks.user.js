@@ -1,7 +1,8 @@
 // ==UserScript==
 // @name         Download backing tracks von ultimate-guitar.com
 // @namespace    https://github.com/sker65/userscripts/ultimate-guitar
-// @version      0.1
+// @run-at       document-start
+// @version      0.2
 // @description  Easier downloading of backing tracks
 // @updateURL    https://github.com/sker65/userscripts/raw/main/ultimate-guitar/download-backing-tracks.user.js
 // @downloadURL  https://github.com/sker65/userscripts/raw/main/ultimate-guitar/download-backing-tracks.user.js
@@ -17,54 +18,51 @@
 
   GM_addStyle('span.btn-down:before { content: "D"; visibility: visible; display: inline-block; font-weight: 600; font-size: 13px; text-transform: uppercase; color: #212121;} span.btn-down { visibility: hidden; width: 20px; display: inline-block;');
 
-  const trackURLS = [];
-  const tracks = {};
-
-      // hook into AJAX reqeusts to capture loaded calendar items
-  (function(open) {
-      XMLHttpRequest.prototype.open = function() {
-          this.addEventListener("readystatechange", function() {
-              if( this.readyState == 4 ){
-                  const respURL = this.responseURL.toString();
-                  if( respURL.startsWith('https://www.ultimate-guitar.com/static/backingtracks/multitracks/normal/') ) {
-                      console.log(respURL);
-                      trackURLS.push(respURL);
-                  }
-              }
-          }, false);
-          open.apply(this, arguments);
-      };
-  })(XMLHttpRequest.prototype.open);
-
-
+  let config = null;
   const elementHandlers = {}; // name -> (node)=>{}
 
-  elementHandlers.HEADER = (node) => {
+  elementHandlers.HEADER = (node, remove) => {
       if( node.parentNode.classList.contains('controls' ) ) {
-          console.log('Header', node.innerHTML);
+          //console.log('Header', node.innerHTML);
+          let name = node.innerHTML;
           let fname = node.innerHTML.replaceAll(' ', '-' ) + ".mp3";
-          let url = trackURLS.shift();
-          tracks[fname] = url;
           let span = document.createElement('span');
           span.innerHTML = 'Down';
           span.className = "btn btn-default btn-xs btn-down";
           span.addEventListener("click", e=>{
-              console.log(tracks[fname]);
-              console.log("will download "+tracks[fname]+ " as "+ fname);
-              GM_download({url: tracks[fname], saveAs: true, name: fname});
+              //console.log(name);
+              const i = config.find( r => r.name == name );
+              if( i ) {
+                  //console.log(i);
+                  console.log("will download '"+name+ "' as "+ fname + " from "+i.content_urls.normal);
+                  GM_download({url: i.content_urls.normal, saveAs: true, name: fname});
+              } else {
+                  console.warn("download item not found");
+              }
           });
           node.nextSibling.appendChild(span);
           node.nextSibling.nextSibling.style.width = '100px';
       }
   };
 
-  function processNode( node ) {
-      if( elementHandlers[node.nodeName] ) elementHandlers[node.nodeName](node);
+  elementHandlers.DIV = (node, remove) => {
+      const escData = node.getAttribute('data-content');
+      if( escData ) {
+          const data = escData.replace(/&quot;/g, '"');
+          const conf = JSON.parse(data);
+          // json path store.page.data.viewer.backing_track.content_urls
+          //console.log("CONFIG (DIV handler)", remove, conf.store.page.data.viewer.backing_track.content_urls);
+          config = conf.store.page.data.viewer.backing_track.content_urls;
+      }
+  }
+
+  function processNode( node, remove ) {
+      if( elementHandlers[node.nodeName] ) elementHandlers[node.nodeName](node, remove);
 
       if( node.children ) {
           for (let i = 0; i < node.children.length; i++) {
               let item = node.children[i];
-              processNode( item );
+              processNode( item, remove );
           }
       }
   }
@@ -72,20 +70,25 @@
   function mutationHandler (mutationRecords) {
 
       mutationRecords.forEach ( (mutation) => {
-          //console.log( typeof mutation.target, mutation.target );
-          if( mutation.target.classList.contains('playlist-tracks' )
-             && mutation.type == "childList"
+          // console.log( mutation.type, typeof mutation.target, mutation.target );
+          if( /*mutation.target.classList.contains('playlist-tracks' )
+             && */ mutation.type == "childList"
              && typeof mutation.addedNodes == "object"
              && mutation.addedNodes.length
             ) {
               for (var J = 0, L = mutation.addedNodes.length; J < L; ++J) {
                   const node = mutation.addedNodes[J];
-                  processNode(node);
+                  processNode(node, false);
               }
-          } else if (mutation.type == "attributes") {
-              // not used actually
-              const src = mutation.target.getAttribute('src');
-              //console.log("changed Attribute node: "+mutation.target.nodeName+" src="+ src );
+          } else if( /*mutation.target.classList.contains('playlist-tracks' )
+             && */ mutation.type == "childList"
+             && typeof mutation.removedNodes == "object"
+             && mutation.removedNodes.length
+            ) {
+              for (var J1 = 0, L1 = mutation.removedNodes.length; J1 < L1; ++J1) {
+                  const node = mutation.removedNodes[J1];
+                  processNode(node, true);
+              }
           }
       } );
   }
@@ -94,7 +97,7 @@
   var observer = new MutationObserver(mutationHandler);
   var observerConfig = {
       childList: true, attributes: true,
-      subtree: true, attributeFilter: ['src']
+      subtree: true
   };
 
   observer.observe (document, observerConfig);
